@@ -1,0 +1,20 @@
+# Python-specific
+*.pyc
+__pycache__/
+
+# Conda environments
+/env/
+.conda/
+
+# Dependency management
+/conda-meta/
+/pkgs/
+/site-packages/
+
+# Visual Studio Code
+.vscode/
+.settings/
+*.code-workspace
+
+# PyCharm
+.idea/
