@@ -17,13 +17,37 @@ def split_train_dev_test(X, y, test_size=0.2, dev_size=0.25, random_state=1):
 def predict_and_eval(model, X, y):
     y_pred = model.predict(X)
     accuracy = (y_pred == y).mean()
-    classification_rep = classification_report(y, y_pred)
-    confusion_mat = confusion_matrix(y, y_pred)
-    return accuracy, classification_rep,confusion_mat
+    # classification_rep = classification_report(y, y_pred)
+    # confusion_mat = confusion_matrix(y, y_pred)
+    # return accuracy, classification_rep, confusion_mat
+    return accuracy
 
+def tune_hyperparameters(X_train, y_train, X_dev, y_dev, hyperparameter_combinations):
+    best_hyperparameters = None
+    best_model = None
+    best_dev_accuracy = 0.0
+    
+    # Iterate through each set of hyperparameters in the list
+    for hyperparameters in hyperparameter_combinations:
+        # Train a model with the current set of hyperparameters
+        current_model = train_model(X_train, y_train, hyperparameters)
+
+        # Evaluate the model's accuracy on the training dataset
+        train_accuracy = predict_and_eval(current_model, X_train, y_train)  
+        
+        # Evaluate the model on the development dataset
+        dev_accuracy = predict_and_eval(current_model, X_dev, y_dev)  
+        
+        # Check if this model's accuracy is better than the current best
+        if dev_accuracy > best_dev_accuracy:
+            best_hyperparameters = hyperparameters
+            best_model = current_model
+            best_dev_accuracy = dev_accuracy
+    
+    return train_accuracy, best_hyperparameters, best_model, best_dev_accuracy
 
 # Train a specified model on the given data
-def dev_classify_model(X, y, model_params, model_type='svm'):
+def train_model(X, y, model_params, model_type='svm'):
     if model_type == 'svm':
         classifier = svm.SVC(**model_params)
     classifier.fit(X, y)
