@@ -8,8 +8,8 @@ conda create --name digits python==3.9
 conda activate {env_name}
 conda activate digits
 
-## Step3: Create requirments.txt file
-pip install -r requirments.txt
+## Step3: Create requirements.txt file
+pip install -r requirements.txt
 
 ## Step4: Run the python file
 python plot_digits_classification.py 
