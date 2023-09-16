@@ -3,7 +3,7 @@
 
 import itertools
 from sklearn import datasets, metrics, svm
-from utilities import train_model, predict_and_eval, split_train_dev_test, preprocess, tune_hyperparameters
+from utilities import train_model, predict_and_eval, split_train_dev_test, preprocess, tune_hyperparameters, create_hparam_combo
 
 # 1. Get the dataset
 digits = datasets.load_digits()
@@ -35,7 +35,7 @@ for dev_test in dev_test_combinations:
 
     # Generate a list of dictionaries representing all combinations
     # param_combinations = [{'gamma': gamma, 'C': C} for gamma, C in itertools.product(gamma_range, C_range)]
-    param_combinations = [{'gamma': gamma, 'C': C} for gamma in gamma_range for C in C_range]
+    param_combinations = create_hparam_combo(gamma_range, C_range)
 
     # Hyperparameter tuning 
     train_acc, best_hparams, best_model, best_accuracy = tune_hyperparameters(X_train, y_train, X_dev, y_dev, param_combinations)
