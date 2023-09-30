@@ -58,3 +58,7 @@ def preprocess(x):
     num_samples = len(x)
     x = x.reshape((num_samples, -1))
     return x
+
+
+def create_hparam_combo(gamma_range, C_range):
+    return [{'gamma': gamma, 'C': C} for gamma in gamma_range for C in C_range]
