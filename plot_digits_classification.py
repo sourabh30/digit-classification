@@ -53,3 +53,11 @@ for dev_test in dev_test_combinations:
     # Print all combinations 
     print(f'test_size={test_size}, dev_size={dev_size}, train_size={train_size}, train_acc:{train_acc} dev_acc:{best_accuracy} test_acc: {accuracy_test}')
     print(f' Best params:{best_hparams}')
+
+
+# Added as part of test 2.1
+print("Length of data set:", len(x))
+# Added as part of test 2.2
+for image in x:
+    height, width = image.shape[0], image.shape[1]
+    print(f"Image Size - Width: {width}, Height: {height}")
