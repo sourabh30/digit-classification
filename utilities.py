@@ -1,64 +1,84 @@
-from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report,confusion_matrix
+from sklearn import svm, datasets, metrics
+from joblib import dump, load
+# we will put all utils here
 
-# Function for splitting the data set inot train, test and dev set
-def split_train_dev_test(X, y, test_size=0.2, dev_size=0.25, random_state=1):
-    X_train, X_temp, y_train, y_temp = train_test_split(
-        X, y, test_size=test_size, random_state=random_state
+def get_combinations(param_name, param_values, base_combinations):    
+    new_combinations = []
+    for value in param_values:
+        for combination in base_combinations:
+            combination[param_name] = value
+            new_combinations.append(combination.copy())    
+    return new_combinations
+
+def get_hyperparameter_combinations(dict_of_param_lists):    
+    base_combinations = [{}]
+    for param_name, param_values in dict_of_param_lists.items():
+        base_combinations = get_combinations(param_name, param_values, base_combinations)
+    return base_combinations
+
+def tune_hparams(X_train, y_train, X_dev, y_dev, h_params_combinations, model_type="svm"):
+    best_accuracy = -1
+    best_model_path = ""
+    for h_params in h_params_combinations:
+        # 5. Model training
+        model = train_model(X_train, y_train, h_params, model_type=model_type)
+        # Predict the value of the digit on the test subset        
+        cur_accuracy = predict_and_eval(model, X_dev, y_dev)
+        if cur_accuracy > best_accuracy:
+            best_accuracy = cur_accuracy
+            best_hparams = h_params
+            best_model_path = "./models/{}_".format(model_type) +"_".join(["{}:{}".format(k,v) for k,v in h_params.items()]) + ".joblib"
+            best_model = model
+
+    # save the best_model    
+    dump(best_model, best_model_path) 
+
+    print("Model save at {}".format(best_model_path))
+
+    return best_hparams, best_model_path, best_accuracy 
+
+
+
+def read_digits():
+    digits = datasets.load_digits()
+    X = digits.images
+    y = digits.target
+    return X, y 
+
+def preprocess_data(data):
+    # flatten the images
+    n_samples = len(data)
+    data = data.reshape((n_samples, -1))
+    return data
+
+# Split data into 50% train and 50% test subsets
+def split_data(x, y, test_size, random_state=1):
+    X_train, X_test, y_train, y_test = train_test_split(
+    x, y, test_size=test_size,random_state=random_state
     )
-    X_dev, X_test, y_dev, y_test = train_test_split(
-        X_temp, y_temp, test_size=dev_size / (dev_size + test_size), random_state=random_state
-    )
-    return X_train, X_dev, X_test, y_train, y_dev, y_test
+    return X_train, X_test, y_train, y_test
+
+# train the model of choice with the model prameter
+def train_model(x, y, model_params, model_type="svm"):
+    if model_type == "svm":
+        # Create a classifier: a support vector classifier
+        clf = svm.SVC
+    model = clf(**model_params)
+    # train the model
+    model.fit(x, y)
+    return model
 
 
-# Function for evaluationg the model
-def predict_and_eval(model, X, y):
-    y_pred = model.predict(X)
-    accuracy = (y_pred == y).mean()
-    # classification_rep = classification_report(y, y_pred)
-    # confusion_mat = confusion_matrix(y, y_pred)
-    # return accuracy, classification_rep, confusion_mat
-    return accuracy
-
-def tune_hyperparameters(X_train, y_train, X_dev, y_dev, hyperparameter_combinations):
-    best_hyperparameters = None
-    best_model = None
-    best_dev_accuracy = 0.0
+def train_test_dev_split(X, y, test_size, dev_size):
+    X_train_dev, X_test, Y_train_Dev, y_test =  split_data(X, y, test_size=test_size, random_state=1)
+    print("train+dev = {} test = {}".format(len(Y_train_Dev),len(y_test)))
     
-    # Iterate through each set of hyperparameters in the list
-    for hyperparameters in hyperparameter_combinations:
-        # Train a model with the current set of hyperparameters
-        current_model = train_model(X_train, y_train, hyperparameters)
-
-        # Evaluate the model's accuracy on the training dataset
-        train_accuracy = predict_and_eval(current_model, X_train, y_train)  
+    X_train, X_dev, y_train, y_dev = split_data(X_train_dev, Y_train_Dev, dev_size/(1-test_size), random_state=1)
         
-        # Evaluate the model on the development dataset
-        dev_accuracy = predict_and_eval(current_model, X_dev, y_dev)  
-        
-        # Check if this model's accuracy is better than the current best
-        if dev_accuracy > best_dev_accuracy:
-            best_hyperparameters = hyperparameters
-            best_model = current_model
-            best_dev_accuracy = dev_accuracy
-    
-    return train_accuracy, best_hyperparameters, best_model, best_dev_accuracy
+    return X_train, X_test, X_dev, y_train, y_test, y_dev
 
-# Train a specified model on the given data
-def train_model(X, y, model_params, model_type='svm'):
-    if model_type == 'svm':
-        classifier = svm.SVC(**model_params)
-    classifier.fit(X, y)
-    return classifier
-
-
-def preprocess(x):
-    num_samples = len(x)
-    x = x.reshape((num_samples, -1))
-    return x
-
-
-def create_hparam_combo(gamma_range, C_range):
-    return [{'gamma': gamma, 'C': C} for gamma in gamma_range for C in C_range]
+# Question 2:
+def predict_and_eval(model, X_test, y_test):
+    predicted = model.predict(X_test)
+    return metrics.accuracy_score(y_test, predicted)
