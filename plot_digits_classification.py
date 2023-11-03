@@ -1,53 +1,92 @@
-"""
-================================
-Recognizing hand-written digits
-================================
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix
 
-This example shows how scikit-learn can be used to recognize images of
-hand-written digits, from 0-9.
+import joblib
+from utilities import preprocess, train_model, split_train_dev_test, read_digits, predict_and_eval,split_train_dev_test,tune_hyperparameters, ensure_directory_exists
 
-"""
+x, y = read_digits()
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-# License: BSD 3 clause
+import itertools
 
-# Import datasets, classifiers and performance metrics
-from sklearn import metrics, svm
+# Define the ranges of development and test sizes
+dev_size_options = [0.1, 0.2, 0.3]
+test_size_options = [0.1, 0.2, 0.3]
 
-from utilities import preprocess_data, split_data, train_model, read_digits, predict_and_eval, train_test_dev_split, get_hyperparameter_combinations, tune_hparams
-from joblib import dump, load
-# 1. Get the dataset
-X, y = read_digits()
+# Generate combinations of development and test sizes
+dev_test_combinations = [{'test_size': test, 'dev_size': dev} for test, dev in itertools.product(test_size_options, dev_size_options)]
 
-# 2. Hyperparameter combinations
-# 2.1. SVM
-gamma_list = [0.001, 0.01, 0.1, 1]
-C_list = [1, 10, 100, 1000]
-h_params={}
-h_params['gamma'] = gamma_list
-h_params['C'] = C_list
-h_params_combinations = get_hyperparameter_combinations(h_params)
+# Define model types
+model_types = ['svm', 'decision_tree']
 
-test_sizes =  [0.1, 0.2, 0.3, 0.45]
-dev_sizes  =  [0.1, 0.2, 0.3, 0.45]
-for test_size in test_sizes:
-    for dev_size in dev_sizes:
-        train_size = 1- test_size - dev_size
-        # 3. Data splitting -- to create train and test sets                
-        X_train, X_test, X_dev, y_train, y_test, y_dev = train_test_dev_split(X, y, test_size=test_size, dev_size=dev_size)
-        # 4. Data preprocessing
-        X_train = preprocess_data(X_train)
-        X_test = preprocess_data(X_test)
-        X_dev = preprocess_data(X_dev)
+for model_type in model_types:
+    for dict_size in dev_test_combinations:
+        test_size_options = dict_size['test_size']
+        dev_size_options = dict_size['dev_size']
+        train_size = 1 - (dev_size_options + test_size_options)
+        
+        # Data splitting into train, test, and dev set
+        X_train, X_dev, X_test, y_train, y_dev, y_test = split_train_dev_test(x, y, test_size=test_size_options, dev_size=dev_size_options)
+        
+        # Data Preprocessing
+        X_train = preprocess(X_train)
+        X_test = preprocess(X_test)
+        X_dev = preprocess(X_dev)
+        
+        # Defining the list hyper-params for SVM Classifier or Decision Tree Classifier
+        if model_type == 'svm':
+            gamma_range = [0.001, 0.01, 0.1, 1.0, 10]
+            C_range = [0.1, 1.0, 2, 5, 10]
+            #param_combinations = [{'gamma': gamma, 'C': C} for gamma, C in itertools.product(gamma_range, C_range)]
+            param_combinations = [{'gamma': [gamma], 'C': [C]} for gamma, C in itertools.product(gamma_range, C_range)]
+        elif model_type == 'decision_tree':
+            max_depth_range = [None, 10, 20, 30]
+            min_samples_split_range = [2, 5, 10]
+            #param_combinations = [{'max_depth': max_depth, 'min_samples_split': min_samples_split} for max_depth, min_samples_split in itertools.product(max_depth_range, min_samples_split_range)]
+            param_combinations = [{'max_depth': [max_depth], 'min_samples_split': [min_samples_split]} for max_depth, min_samples_split in itertools.product(max_depth_range, min_samples_split_range)]
+
+        # Tuning the Hyperparameters
+        train_acc, best_hparams, best_model, best_accuracy = tune_hyperparameters(X_train, y_train, X_dev, y_dev, param_combinations, model_type)
+        
+        # Train the data
+        model = train_model(X_train, y_train, best_hparams, model_type)
+        
+        # Predict and evaluate the model on the test subset
+        accuracy_test = predict_and_eval(model, X_test, y_test)
+        
+        # Print best params for each of the 9 combinations
+        print(f'Model Type: {model_type}, test_size={test_size_options}, dev_size={dev_size_options}, train_size={train_size}, train_acc:{train_acc:.2f} dev_acc:{best_accuracy:.2f} test_acc: {accuracy_test:.2f}')
+        print(f' Best params:{best_hparams}')
+
+
+    # After selecting the best model, calculate accuracy and print confusion matrix
+    best_train_pred = best_model.predict(X_test)
+    best_dev_pred = best_model.predict(X_dev)
+
+    train_accuracy = accuracy_score(y_test, best_train_pred)
+    dev_accuracy = accuracy_score(y_dev, best_dev_pred)
     
-        best_hparams, best_model_path, best_accuracy  = tune_hparams(X_train, y_train, X_dev, 
-        y_dev, h_params_combinations)        
+    print("Final Best model parameters:", best_hparams)
+    print("Training accuracy with best model:", train_accuracy)
+    print("Development accuracy with best model:", dev_accuracy)
     
-        # loading of model         
-        best_model = load(best_model_path) 
+    # Print confusion matrices
+    print("Confusion matrix for training data:")
+    print(confusion_matrix(y_test, best_train_pred))
+    
+    print("Confusion matrix for development data:")
+    print(confusion_matrix(y_dev, best_dev_pred))
 
-        test_acc = predict_and_eval(best_model, X_test, y_test)
-        train_acc = predict_and_eval(best_model, X_train, y_train)
-        dev_acc = best_accuracy
+    # Save the best model to a file
+    if model_type == 'svm':
+        best_model_filename = f"best_svm_model_{model_type}_{'_'.join([f'{k}:{v}' for k, v in best_hparams.items()])}.pkl"
+    elif model_type == 'decision_tree':
+        best_model_filename = f"best_decision_tree_model_{model_type}_{'_'.join([f'{k}:{v}' for k, v in best_hparams.items()])}.pkl"
 
-        print("test_size={:.2f} dev_size={:.2f} train_size={:.2f} train_acc={:.2f} dev_acc={:.2f} test_acc={:.2f}".format(test_size, dev_size, train_size, train_acc, dev_acc, test_acc))
+    shared_volume_path = 'models'
+    model_save_path = f"{shared_volume_path}/{best_model_filename}"
+    ensure_directory_exists(model_save_path)
+
+
+    # joblib.dump(best_model, best_model_filename)
+    joblib.dump(best_model, model_save_path)
+    print(f"Best {model_type} model saved as {best_model_filename}")

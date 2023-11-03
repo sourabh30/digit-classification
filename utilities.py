@@ -1,44 +1,77 @@
+from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
-from sklearn import svm, datasets, metrics
-from joblib import dump, load
-# we will put all utils here
+from sklearn.metrics import classification_report, confusion_matrix
 
-def get_combinations(param_name, param_values, base_combinations):    
-    new_combinations = []
-    for value in param_values:
-        for combination in base_combinations:
-            combination[param_name] = value
-            new_combinations.append(combination.copy())    
-    return new_combinations
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+import os
 
-def get_hyperparameter_combinations(dict_of_param_lists):    
-    base_combinations = [{}]
-    for param_name, param_values in dict_of_param_lists.items():
-        base_combinations = get_combinations(param_name, param_values, base_combinations)
-    return base_combinations
-
-def tune_hparams(X_train, y_train, X_dev, y_dev, h_params_combinations, model_type="svm"):
-    best_accuracy = -1
-    best_model_path = ""
-    for h_params in h_params_combinations:
-        # 5. Model training
-        model = train_model(X_train, y_train, h_params, model_type=model_type)
-        # Predict the value of the digit on the test subset        
-        cur_accuracy = predict_and_eval(model, X_dev, y_dev)
-        if cur_accuracy > best_accuracy:
-            best_accuracy = cur_accuracy
-            best_hparams = h_params
-            best_model_path = "./models/{}_".format(model_type) +"_".join(["{}:{}".format(k,v) for k,v in h_params.items()]) + ".joblib"
-            best_model = model
-
-    # save the best_model    
-    dump(best_model, best_model_path) 
-
-    print("Model save at {}".format(best_model_path))
-
-    return best_hparams, best_model_path, best_accuracy 
+def ensure_directory_exists(file_path):
+    directory = os.path.dirname(file_path)
+    
+    # Check if the directory exists
+    if not os.path.exists(directory):
+        # If it doesn't exist, create the directory
+        os.makedirs(directory)
+        # print(f"Directory '{directory}' created.")
+    else:
+        # print(f"Directory '{directory}' already exists.")
+        pass
 
 
+
+# Function for splitting the data set inot train, test and dev set
+def split_train_dev_test(X, y, test_size=0.2, dev_size=0.25, random_state=1):
+    X_train, X_temp, y_train, y_temp = train_test_split(
+        X, y, test_size=test_size, random_state=random_state
+    )
+    X_dev, X_test, y_dev, y_test = train_test_split(
+        X_temp, y_temp, test_size=dev_size / (dev_size + test_size), random_state=random_state
+    )
+    return X_train, X_dev, X_test, y_train, y_dev, y_test
+
+
+# Function for evaluationg the model
+def predict_and_eval(model, X, y):
+    y_pred = model.predict(X)
+    accuracy = (y_pred == y).mean()
+    # classification_rep = classification_report(y, y_pred)
+    # confusion_mat = confusion_matrix(y, y_pred)
+    # return accuracy, classification_rep, confusion_mat
+    return accuracy
+
+def tune_hyperparameters(X_train, y_train, X_dev, y_dev, hyperparameter_combinations, model_type):
+    best_hyperparameters = None
+    best_model = None
+    best_dev_accuracy = 0.0
+    
+    # Iterate through each set of hyperparameters in the list
+def tune_hyperparameters(X_train, y_train, X_dev, y_dev, param_combinations, model_type):
+    if model_type == 'svm':
+        model = SVC()
+    elif model_type == 'decision_tree':
+        model = DecisionTreeClassifier()
+    
+    grid_search = GridSearchCV(model, param_combinations, cv=3, n_jobs=-1, scoring='accuracy')
+    grid_search.fit(X_train, y_train)
+    
+    best_hparams = grid_search.best_params_
+    best_model = grid_search.best_estimator_
+    best_accuracy = grid_search.best_score_
+    
+    return grid_search.best_score_, best_hparams, best_model,best_accuracy
+
+# Train a specified model on the given data
+def train_model(X_train, y_train, best_hparams, model_type='svm'):
+    if model_type == 'svm':
+        model = SVC(**best_hparams)
+    elif model_type == 'decision_tree':
+        model = DecisionTreeClassifier(**best_hparams)
+    
+    model.fit(X_train, y_train)
+    return model
 
 def read_digits():
     digits = datasets.load_digits()
@@ -46,39 +79,12 @@ def read_digits():
     y = digits.target
     return X, y 
 
-def preprocess_data(data):
-    # flatten the images
-    n_samples = len(data)
-    data = data.reshape((n_samples, -1))
-    return data
 
-# Split data into 50% train and 50% test subsets
-def split_data(x, y, test_size, random_state=1):
-    X_train, X_test, y_train, y_test = train_test_split(
-    x, y, test_size=test_size,random_state=random_state
-    )
-    return X_train, X_test, y_train, y_test
-
-# train the model of choice with the model prameter
-def train_model(x, y, model_params, model_type="svm"):
-    if model_type == "svm":
-        # Create a classifier: a support vector classifier
-        clf = svm.SVC
-    model = clf(**model_params)
-    # train the model
-    model.fit(x, y)
-    return model
+def preprocess(x):
+    num_samples = len(x)
+    x = x.reshape((num_samples, -1))
+    return x
 
 
-def train_test_dev_split(X, y, test_size, dev_size):
-    X_train_dev, X_test, Y_train_Dev, y_test =  split_data(X, y, test_size=test_size, random_state=1)
-    print("train+dev = {} test = {}".format(len(Y_train_Dev),len(y_test)))
-    
-    X_train, X_dev, y_train, y_dev = split_data(X_train_dev, Y_train_Dev, dev_size/(1-test_size), random_state=1)
-        
-    return X_train, X_test, X_dev, y_train, y_test, y_dev
-
-# Question 2:
-def predict_and_eval(model, X_test, y_test):
-    predicted = model.predict(X_test)
-    return metrics.accuracy_score(y_test, predicted)
+def create_hparam_combo(gamma_range, C_range):
+    return [{'gamma': gamma, 'C': C} for gamma in gamma_range for C in C_range]

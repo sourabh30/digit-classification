@@ -1,0 +1,37 @@
+# FROM ubuntu:23.04
+FROM python:3.11.4
+
+# CMD ["echo", "our first cmd line"]
+
+# copy the full code
+COPY . /digits
+
+RUN mkdir -p /myvol
+
+# RUN apt-get update
+# RUN apt-get install python3.11.4
+
+
+# Install any required Python dependencies
+RUN pip install -r digits/requirements.txt
+
+# CMD ["cd /digits"]
+# RUN ["cd", "digits"]
+
+# RUN cd /digits
+WORKDIR /digits
+
+# CMD ["pytest"]
+
+# Run the command to train your models when the container starts
+CMD [ "python","plot_digits_classification.py"]
+
+# Set the FLASK_APP environment variable
+# ENV FLASK_APP=app
+
+# Expose the Flask application port (usually 5000)
+# EXPOSE 5000
+
+# Command to run the Flask app
+# CMD ["flask", "run"]
+
