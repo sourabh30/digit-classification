@@ -31,4 +31,6 @@ Two places of randomness
 	- weight initialization
 
 
-
+## Setup Flask
+export FLASK_APP=app
+flask run
