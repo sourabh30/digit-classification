@@ -24,14 +24,14 @@ WORKDIR /digits
 # CMD ["pytest"]
 
 # Run the command to train your models when the container starts
-CMD [ "python","plot_digits_classification.py"]
+# CMD [ "python","plot_digits_classification.py"]
 
 # Set the FLASK_APP environment variable
-# ENV FLASK_APP=app
+ENV FLASK_APP=api/app
 
 # Expose the Flask application port (usually 5000)
 # EXPOSE 5000
 
 # Command to run the Flask app
-# CMD ["flask", "run"]
+CMD ["flask", "run", "--host=0.0.0.0"]
 
