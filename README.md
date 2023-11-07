@@ -32,5 +32,5 @@ Two places of randomness
 
 
 ## Setup Flask
-export FLASK_APP=app
+export FLASK_APP=api/app
 flask run
