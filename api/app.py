@@ -25,9 +25,30 @@ def sum_two_num_int(x,y):
 
 @app.route('/sum_numbers', methods = ['POST'])
 def sum_num():
-    data = request.get_json( )
+    data = request.get_json()
     x = data['x']
     y = data['y']
     sum = int(x) + int(y)
     print(sum)
     return str(sum)
+
+
+@app.route('/compare_images', methods=['POST'])
+def compare_images():
+    data = request.get_json()
+    # Get the image files from the request
+    image1_array = data['image1']
+    image2_array = data['image2']
+
+    # Compare the NumPy arrays
+    if image1_array == image2_array:
+        status = True
+    else:
+        status = False
+
+    # status = True
+    response = {
+        "result": status 
+    }
+
+    return response
