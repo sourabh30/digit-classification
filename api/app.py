@@ -1,4 +1,9 @@
-from flask import Flask, request
+import joblib
+from flask import Flask, request, jsonify
+from ..utilities import preprocess, get_best_model
+import os
+import numpy as np
+import json
 
 from markupsafe import escape
 
@@ -52,3 +57,46 @@ def compare_images():
     }
 
     return response
+
+
+@app.route('/predict', methods=['POST'])
+def predict_digit():
+    
+    # Get the image array from the input
+    image_array = get_image_array()
+
+    # Comvert string image array to np array
+    image_array = get_np_image_array(image_array)
+
+    # Pre processing the image
+    preprocessed_image = preprocess(image_array)
+
+    # Get the best model to predict
+    best_model = get_best_model()
+
+    # Use the loaded model for prediction
+    predicted_digit = best_model.predict(preprocessed_image.reshape(1, -1))[0]
+
+    # Generate and send the predicated data
+    return generate_response(predicted_digit)
+
+
+def get_image_array():
+    data = request.get_json()
+    return data['image']
+
+def get_np_image_array(image_array):
+    return np.array(json.loads(image_array))
+
+def get_best_model():
+    return joblib.load(get_best_model())
+
+def generate_response(predicted_digit):
+    response = {
+        "predicted_digit": int(predicted_digit)
+    }
+    return jsonify(response)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
