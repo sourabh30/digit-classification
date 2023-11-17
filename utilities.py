@@ -89,3 +89,15 @@ def preprocess(x):
 
 def create_hparam_combo(gamma_range, C_range):
     return [{'gamma': gamma, 'C': C} for gamma in gamma_range for C in C_range]
+
+def get_best_model():
+    # Dynamically load the first model in the 'models/' folder
+    model_files = os.listdir('models/')
+    model_files = [file for file in model_files if file.endswith('.pkl')]
+
+    if not model_files:
+        raise FileNotFoundError("No model files found in the 'models/' folder")
+
+    first_model_file = model_files[0]
+    first_model_path = f"models/{first_model_file}"
+    return first_model_path
