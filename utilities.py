@@ -90,9 +90,10 @@ def preprocess(x):
 def create_hparam_combo(gamma_range, C_range):
     return [{'gamma': gamma, 'C': C} for gamma in gamma_range for C in C_range]
 
-def get_best_model():
+def get_ml_model(dir):
     # Dynamically load the first model in the 'models/' folder
-    model_files = os.listdir('models/')
+    model_files = os.listdir(f'{dir}/')
+    # model_files = os.listdir('models/')
     model_files = [file for file in model_files if file.endswith('.pkl')]
 
     if not model_files:

@@ -1,6 +1,6 @@
 import joblib
 from flask import Flask, request, jsonify
-from ..utilities import preprocess, get_best_model
+from ..utilities import preprocess, get_ml_model
 import os
 import numpy as np
 import json
@@ -89,7 +89,7 @@ def get_np_image_array(image_array):
     return np.array(json.loads(image_array))
 
 def get_best_model():
-    return joblib.load(get_best_model())
+    return joblib.load(get_ml_model('models'))
 
 def generate_response(predicted_digit):
     response = {
