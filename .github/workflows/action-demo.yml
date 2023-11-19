@@ -24,4 +24,4 @@ jobs:
       - name: Run test cases
         run:
           # python plot_digits_classification.py
-          pytest
+          pytest -s

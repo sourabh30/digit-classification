@@ -1,5 +1,5 @@
 import pytest
-from utilities import create_hparam_combo
+# from ..utilities import create_hparam_combo
 from sklearn import datasets
 import numpy as np
 from api.app import app
