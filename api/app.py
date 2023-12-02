@@ -1,6 +1,6 @@
 import joblib
 from flask import Flask, request, jsonify
-from ..utilities import preprocess, get_ml_model
+from utilities import preprocess, get_ml_model
 import os
 import numpy as np
 import json
