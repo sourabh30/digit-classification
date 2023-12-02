@@ -1,6 +1,7 @@
 import joblib
 from flask import Flask, request, jsonify
-from utilities import preprocess, get_ml_model
+# from utilities.utilities import preprocess, get_ml_model
+from sklearn.preprocessing import StandardScaler
 import os
 import numpy as np
 import json
@@ -58,6 +59,28 @@ def compare_images():
 
     return response
 
+@app.route('/predict/<model_type>', methods=['POST'])
+def load_model(model_type):
+
+    supported_model_types = ['svm', 'tree', 'lr']
+    return_msg = { "model_type" : f"You have passed {model_type}"}
+
+    if model_type == 'svm':
+        return return_msg
+    
+    elif model_type == 'tree':
+        return return_msg
+    
+    elif model_type == 'lr':
+        return return_msg
+    else:
+        return { "model_type" : f"{model_type} model not supported. Supported models {supported_model_types}"}
+
+    # if model_type in supported_model_types:
+    #     return return_msg
+    # else:
+    #     return { "model_type" : f"{model_type} model not supported. Supported models {supported_model_types}"}
+
 
 @app.route('/predict', methods=['POST'])
 def predict_digit():
@@ -96,6 +119,35 @@ def generate_response(predicted_digit):
         "predicted_digit": int(predicted_digit)
     }
     return jsonify(response)
+
+def preprocess(x):
+    num_samples = len(x)
+    x = x.reshape((num_samples, -1))
+
+    # Applying unit normalization using StandardScaler
+    scaler = StandardScaler()
+    data_normalized = scaler.fit_transform(x)
+
+    return data_normalized
+
+
+def get_ml_model(dir):
+    # Dynamically load the first model in the 'models/' folder
+    model_files = os.listdir(f'{dir}/')
+    # model_files = os.listdir('models/')
+    model_files = [file for file in model_files if file.endswith('.pkl')]
+
+    if not model_files:
+        raise FileNotFoundError("No model files found in the 'models/' folder")
+
+    # try:
+    #     first_model_file = model_files[3]
+    # except:
+    #     first_model_file = model_files[0]
+
+    first_model_file = model_files[0]
+    first_model_path = f"models/{first_model_file}"
+    return first_model_path
 
 
 if __name__ == "__main__":

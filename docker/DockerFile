@@ -1,5 +1,9 @@
 # FROM ubuntu:23.04
-FROM python:3.11.4
+# FROM python:3.11.4
+
+# Use the Dependency Image as the base image
+FROM dependency_digits:latest
+# FROM dependency_digits:v1
 
 # CMD ["echo", "our first cmd line"]
 
@@ -13,7 +17,7 @@ RUN mkdir -p /myvol
 
 
 # Install any required Python dependencies
-RUN pip install -r digits/requirements.txt
+# RUN pip install -r digits/requirements.txt
 
 # CMD ["cd /digits"]
 # RUN ["cd", "digits"]
