@@ -63,23 +63,27 @@ def compare_images():
 def load_model(model_type):
 
     supported_model_types = ['svm', 'tree', 'lr']
-    return_msg = { "model_type" : f"You have passed {model_type}"}
-
-    if model_type == 'svm':
-        return return_msg
     
-    elif model_type == 'tree':
-        return return_msg
-    
-    elif model_type == 'lr':
-        return return_msg
-    else:
+    if model_type not in supported_model_types:
         return { "model_type" : f"{model_type} model not supported. Supported models {supported_model_types}"}
 
-    # if model_type in supported_model_types:
-    #     return return_msg
-    # else:
-    #     return { "model_type" : f"{model_type} model not supported. Supported models {supported_model_types}"}
+    # Get the image array from the input
+    image_array = get_image_array()
+
+    # Comvert string image array to np array
+    image_array = get_np_image_array(image_array)
+
+    # Pre processing the image
+    preprocessed_image = preprocess(image_array)
+
+    # Get the model to predict
+    best_model = get_model_by_type('models', model_type)
+
+    # Use the loaded model for prediction
+    predicted_digit = best_model.predict(preprocessed_image.reshape(1, -1))[0]
+
+    # Generate and send the predicated data
+    return generate_response(predicted_digit)
 
 
 @app.route('/predict', methods=['POST'])
@@ -114,6 +118,9 @@ def get_np_image_array(image_array):
 def get_best_model():
     return joblib.load(get_ml_model('models'))
 
+def get_model_by_type(dir, model_type):
+    get_ml_model(dir, None)
+
 def generate_response(predicted_digit):
     response = {
         "predicted_digit": int(predicted_digit)
@@ -129,6 +136,24 @@ def preprocess(x):
     data_normalized = scaler.fit_transform(x)
 
     return data_normalized
+
+def get_ml_model(dir, model_type):
+    # Dynamically load the first model in the 'models/' folder
+    model_files = os.listdir(f'{dir}/')
+    # model_files = os.listdir('models/')
+    model_files = [file for file in model_files if file.endswith('.pkl')]
+
+    if not model_files:
+        raise FileNotFoundError("No model files found in the 'models/' folder")
+
+    # try:
+    #     first_model_file = model_files[3]
+    # except:
+    #     first_model_file = model_files[0]
+
+    first_model_file = model_files[0]
+    first_model_path = f"models/{first_model_file}"
+    return first_model_path
 
 
 def get_ml_model(dir):
