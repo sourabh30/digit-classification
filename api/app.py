@@ -77,7 +77,7 @@ def load_model(model_type):
     preprocessed_image = preprocess(image_array)
 
     # Get the model to predict
-    best_model = get_model_by_type('models', model_type)
+    best_model = get_model_by_type(model_type)
 
     # Use the loaded model for prediction
     predicted_digit = best_model.predict(preprocessed_image.reshape(1, -1))[0]
@@ -118,8 +118,14 @@ def get_np_image_array(image_array):
 def get_best_model():
     return joblib.load(get_ml_model('models'))
 
-def get_model_by_type(dir, model_type):
-    get_ml_model(dir, None)
+def get_model_by_type(model_type):
+    if model_type == "svm":
+        return joblib.load(r"./models/M22AIE249_best_svm_model_svm_C_5_gamma_0.01.pkl")
+    elif model_type == "tree":
+        return joblib.load(r"./models/M22AIE249_best_decision_tree_model_decision_tree_max_depth_20_min_samples_split_2.pkl")
+    elif model_type == "lr":
+        return joblib.load(r"./models/M22AIE249_best_logistic_regression_model_logistic_regression_solver_newton-cg.pkl")
+
 
 def generate_response(predicted_digit):
     response = {
@@ -136,25 +142,6 @@ def preprocess(x):
     data_normalized = scaler.fit_transform(x)
 
     return data_normalized
-
-def get_ml_model(dir, model_type):
-    # Dynamically load the first model in the 'models/' folder
-    model_files = os.listdir(f'{dir}/')
-    # model_files = os.listdir('models/')
-    model_files = [file for file in model_files if file.endswith('.pkl')]
-
-    if not model_files:
-        raise FileNotFoundError("No model files found in the 'models/' folder")
-
-    # try:
-    #     first_model_file = model_files[3]
-    # except:
-    #     first_model_file = model_files[0]
-
-    first_model_file = model_files[0]
-    first_model_path = f"models/{first_model_file}"
-    return first_model_path
-
 
 def get_ml_model(dir):
     # Dynamically load the first model in the 'models/' folder
