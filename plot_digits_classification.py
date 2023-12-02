@@ -78,9 +78,9 @@ for model_type in model_types:
 
     # Save the best model to a file
     if model_type == 'svm':
-        best_model_filename = f"best_svm_model_{model_type}_{'_'.join([f'{k}:{v}' for k, v in best_hparams.items()])}.pkl"
+        best_model_filename = f"best_svm_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
     elif model_type == 'decision_tree':
-        best_model_filename = f"best_decision_tree_model_{model_type}_{'_'.join([f'{k}:{v}' for k, v in best_hparams.items()])}.pkl"
+        best_model_filename = f"best_decision_tree_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
 
     shared_volume_path = 'models'
     model_save_path = f"{shared_volume_path}/{best_model_filename}"
