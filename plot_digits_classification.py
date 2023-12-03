@@ -2,7 +2,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 import joblib
-from utilities import preprocess, train_model, split_train_dev_test, read_digits, predict_and_eval,split_train_dev_test,tune_hyperparameters, ensure_directory_exists
+from utilities.utilities import preprocess, train_model, split_train_dev_test, read_digits, predict_and_eval,split_train_dev_test,tune_hyperparameters, ensure_directory_exists
 
 x, y = read_digits()
 
@@ -16,7 +16,7 @@ test_size_options = [0.1, 0.2, 0.3]
 dev_test_combinations = [{'test_size': test, 'dev_size': dev} for test, dev in itertools.product(test_size_options, dev_size_options)]
 
 # Define model types
-model_types = ['svm', 'decision_tree']
+model_types = ['svm', 'decision_tree','logistic_regression']
 
 for model_type in model_types:
     for dict_size in dev_test_combinations:
@@ -32,8 +32,11 @@ for model_type in model_types:
         X_test = preprocess(X_test)
         X_dev = preprocess(X_dev)
         
-        # Defining the list hyper-params for SVM Classifier or Decision Tree Classifier
-        if model_type == 'svm':
+        # Defining the list hyper-params for Logistic regression, SVM Classifier or Decision Tree Classifier
+        if model_type == 'logistic_regression':
+            solver_options = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'] ## Applying hyperparameter solver for Q2.
+            param_combinations = [{'solver': [solver]} for solver in solver_options]
+        elif model_type == 'svm':
             gamma_range = [0.001, 0.01, 0.1, 1.0, 10]
             C_range = [0.1, 1.0, 2, 5, 10]
             #param_combinations = [{'gamma': gamma, 'C': C} for gamma, C in itertools.product(gamma_range, C_range)]
@@ -77,10 +80,18 @@ for model_type in model_types:
     print(confusion_matrix(y_dev, best_dev_pred))
 
     # Save the best model to a file
+    # if model_type == 'svm':
+    #     best_model_filename = f"best_svm_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
+    # elif model_type == 'decision_tree':
+    #     best_model_filename = f"best_decision_tree_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
+
+    # Save the best model to a file
     if model_type == 'svm':
-        best_model_filename = f"best_svm_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
+        best_model_filename = f"M22AIE249_best_svm_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
     elif model_type == 'decision_tree':
-        best_model_filename = f"best_decision_tree_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
+        best_model_filename = f"M22AIE249_best_decision_tree_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
+    elif model_type == 'logistic_regression':
+        best_model_filename = f"M22AIE249_best_logistic_regression_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
 
     shared_volume_path = 'models'
     model_save_path = f"{shared_volume_path}/{best_model_filename}"

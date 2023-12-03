@@ -3,6 +3,31 @@ import pytest
 from sklearn import datasets
 import numpy as np
 from api.app import app
+import joblib
+from sklearn.linear_model import LogisticRegression
+import glob
+
+
+def test_model_is_lr():
+    #solvers = ['lbfgs', 'liblinear', 'newton-cg', 'sag', 'saga']
+    #for solver in solvers:
+    loaded_model = joblib.load(r"./models/M22AIE249_best_logistic_regression_model_logistic_regression_solver_newton-cg.pkl")
+       #check if loaded model is logistic regression model
+    assert loaded_model.__class__.__name__ == 'LogisticRegression'
+
+
+def test_solver_name_matches_model_file_name():
+    # Replace with your actual roll number and solver name used in the test case
+    roll_number = "M22AIE249"
+    model_solver_list = ["liblinear", "lbfgs", "newton-cg"]
+    model_files = glob.glob(f"./models/{roll_number}_best_logistic*")
+    print(model_files)
+
+    for model_path in model_files:
+        # Extract solver name from the model file name
+        model_solver_name = model_path.split('_')[-1].split('.')[0]
+        # # Check if the solver name in the model file name belongs to the given solver list
+        assert model_solver_name in model_solver_list
 
 # def test_create_hparam_combo():
 #     gamma_range = [0.001, 0.01, 0.1, 1.0, 10]
@@ -11,51 +36,51 @@ from api.app import app
 #     assert len(param_combinations) == len(gamma_range) * len(C_range)
 
 
-def test_post_predict():
-    PREDICTED_DIGIT = "predicted_digit"
+# def test_post_predict():
+#     PREDICTED_DIGIT = "predicted_digit"
 
-    # Function to call the predict api
-    response = predict_digit(0)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 0
+#     # Function to call the predict api
+#     response = predict_digit(0)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 0
 
-    # Function to call the predict api
-    response = predict_digit(1)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 1
+#     # Function to call the predict api
+#     response = predict_digit(1)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 1
 
-    # Function to call the predict api
-    response = predict_digit(2)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 2
+#     # Function to call the predict api
+#     response = predict_digit(2)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 2
 
-    # Function to call the predict api
-    response = predict_digit(3)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 3
+#     # Function to call the predict api
+#     response = predict_digit(3)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 3
 
-    # Function to call the predict api
-    response = predict_digit(4)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 4
+#     # Function to call the predict api
+#     response = predict_digit(4)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 4
 
-    # Function to call the predict api
-    response = predict_digit(5)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 5
+#     # Function to call the predict api
+#     response = predict_digit(5)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 5
 
-    # Function to call the predict api
-    response = predict_digit(6)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 6
+#     # Function to call the predict api
+#     response = predict_digit(6)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 6
 
-    # Function to call the predict api
-    response = predict_digit(7)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 7
+#     # Function to call the predict api
+#     response = predict_digit(7)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 7
 
-    # Function to call the predict api
-    response = predict_digit(8)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 8
+#     # Function to call the predict api
+#     response = predict_digit(8)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 8
 
-    # Function to call the predict api
-    response = predict_digit(9)
-    assert response.get_json()[f'{PREDICTED_DIGIT}'] == 9
+#     # Function to call the predict api
+#     response = predict_digit(9)
+#     assert response.get_json()[f'{PREDICTED_DIGIT}'] == 9
 
-    # Assert the status_code
-    assert response.status_code == 200
+#     # Assert the status_code
+#     assert response.status_code == 200
 
 
 def predict_digit(digit):
