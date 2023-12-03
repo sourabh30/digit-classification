@@ -85,7 +85,7 @@ for model_type in model_types:
     # elif model_type == 'decision_tree':
     #     best_model_filename = f"best_decision_tree_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
 
-        # Save the best model to a file
+    # Save the best model to a file
     if model_type == 'svm':
         best_model_filename = f"M22AIE249_best_svm_model_{model_type}_{'_'.join([f'{k}_{v}' for k, v in best_hparams.items()])}.pkl"
     elif model_type == 'decision_tree':
